@@ -37,16 +37,28 @@ app.post("/contact", upload.none(), async (req, res) => {
       return res.status(400).send("Missing required fields");
     }
 
+    // const transporter = nodemailer.createTransport({
+    //   host: process.env.SMTP_HOST,
+    //   port: Number(process.env.SMTP_PORT),
+    //   secure: false,
+    //   auth: {
+    //     user: process.env.SMTP_USER,
+    //     pass: process.env.SMTP_PASS,
+    //   },
+    // });
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT),
-      secure: false,
+      secure: true, // 🔥 REQUIRED for port 465
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      connectionTimeout: 10000, // 10s
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
-
+    
     await transporter.sendMail({
       from: "Proedge Website <info@proedgemedia.com>",
       to: process.env.MAIL_TO,
@@ -60,6 +72,8 @@ app.post("/contact", upload.none(), async (req, res) => {
         <p><b>Message:</b><br/>${message}</p>
       `,
     });
+    
+    
     
 
     res.send("OK");
