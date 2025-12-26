@@ -48,7 +48,7 @@ app.post("/contact", upload.none(), async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"Proedge Website" <${process.env.SMTP_USER}>`,
+      from: "Proedge Website <info@proedgemedia.com>",
       to: process.env.MAIL_TO,
       replyTo: email,
       subject: `[Proedge Website] ${subject || "New Contact Message"}`,
@@ -60,17 +60,23 @@ app.post("/contact", upload.none(), async (req, res) => {
         <p><b>Message:</b><br/>${message}</p>
       `,
     });
+    
 
     res.send("OK");
   } catch (error) {
-    console.error("EMAIL ERROR:", error);
-    res.status(500).send("Email sending failed");
+    console.error("EMAIL ERROR FULL DETAILS:", {
+      message: error.message,
+      code: error.code,
+      response: error.response,
+      stack: error.stack,
+    });
+  
+    return res.status(500).json({
+      error: "Email sending failed",
+      details: error.message,
+    });
   }
 });
-app.get("/", (req, res) => {
-  res.send("Backend is running");
-});
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
