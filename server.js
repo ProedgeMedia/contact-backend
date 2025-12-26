@@ -9,8 +9,24 @@ dotenv.config();
 const app = express();
 const upload = multer();
 
-app.use(cors());
+// ✅ FIXED CORS CONFIG
+app.use(
+  cors({
+    origin: "https://proedgemedia.com",
+    methods: ["POST", "GET", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
+// ✅ Handle preflight requests
+app.options("*", cors());
+
+// Health check
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
+
+// Contact endpoint
 app.post("/contact", upload.none(), async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
@@ -23,7 +39,7 @@ app.post("/contact", upload.none(), async (req, res) => {
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+      port: Number(process.env.SMTP_PORT),
       secure: false,
       auth: {
         user: process.env.SMTP_USER,
@@ -32,7 +48,7 @@ app.post("/contact", upload.none(), async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: `"Website Contact" <${process.env.SMTP_USER}>`,
+      from: `"Proedge Website" <${process.env.SMTP_USER}>`,
       to: process.env.MAIL_TO,
       replyTo: email,
       subject: `[Proedge Website] ${subject || "New Contact Message"}`,
@@ -40,13 +56,12 @@ app.post("/contact", upload.none(), async (req, res) => {
         <h3>New Contact Message</h3>
         <p><b>Name:</b> ${name}</p>
         <p><b>Email:</b> ${email}</p>
-        <p><b>Subject:</b> ${subject}</p>
+        <p><b>Subject:</b> ${subject || "-"}</p>
         <p><b>Message:</b><br/>${message}</p>
       `,
     });
 
     res.send("OK");
-
   } catch (error) {
     console.error("EMAIL ERROR:", error);
     res.status(500).send("Email sending failed");
@@ -57,6 +72,7 @@ app.get("/", (req, res) => {
 });
 
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server running on port ${process.env.PORT || 3000}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
